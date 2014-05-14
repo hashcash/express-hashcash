@@ -1,0 +1,26 @@
+{
+  "name": "express-hashcash.io",
+  "version": "0.0.1",
+  "author": "Pavel Karoukin <pavel@karoukin.us>",
+  "description": "Express.js Hashcash.io integration",
+  "main": "./lib/express-hashcash",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hashcash/express-hashcash.git"
+  },
+  "keywords": [
+    "express",
+    "http",
+    "server"
+  ],
+  "dependencies": {
+    "hashcash.io": "0.0.x",
+    "node-uuid": "^1.4.1",
+    "url": "^0.7.9",
+    "q": "^1.0.0"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=0.10"
+  }
+}
