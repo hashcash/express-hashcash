@@ -30,10 +30,9 @@
               
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> Hashcash = <span class="hljs-built_in">require</span>(<span class="hljs-string">"hashcash"</span>),
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> Hashcash = <span class="hljs-built_in">require</span>(<span class="hljs-string">"hashcash.io"</span>),
     uuid = <span class="hljs-built_in">require</span>(<span class="hljs-string">"node-uuid"</span>),
     url = <span class="hljs-built_in">require</span>(<span class="hljs-string">"url"</span>),
-    Q = <span class="hljs-built_in">require</span>(<span class="hljs-string">"q"</span>),
     fs = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fs'</span>);</pre></div></div>
             
         </li>
@@ -51,6 +50,7 @@
 […]
 app.configure(function() {
    […]
+   app.use(express.static(__dirname + ‘/public’));
    app.use(express.session({ secret: “secret” }));
    app.use(hashcash({ 
        apikey: “PRIVATE-XXX-XXX”,
@@ -64,17 +64,10 @@ app.configure(function() {
             </div>
             
             <div class="content"><div class='highlight'><pre>module.exports = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> {</span>
-    <span class="hljs-keyword">var</span> apikey = options.apikey;
-    <span class="hljs-keyword">var</span> publickey = options.publickey;
-    <span class="hljs-keyword">var</span> serverUrl = options.serverUrl;
 
-    <span class="hljs-keyword">if</span> (! apikey) {
-        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"apikey option is required."</span>);
-    }
-
-    <span class="hljs-keyword">if</span> (! publickey) {
-        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"publickey option is required."</span>);
-    }</pre></div></div>
+    <span class="hljs-keyword">var</span> apikey     = options.apikey,
+        publickey  = options.publickey,
+        serverUrl  = options.serverUrl,</pre></div></div>
             
         </li>
         
@@ -85,7 +78,7 @@ app.configure(function() {
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
-              <p>You may pass ‘complexity’ option. Larger this value
+              <p>You may pass <strong>option.complexity</strong>. Larger this value -
 longer it takes to compute work.
 This is just a reference value passed to client and down
 the middleware chain. You can always override that in your
@@ -94,8 +87,14 @@ and make it larger for Registration form for example.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span> (! options.complexity) {
-        options.complexity = <span class="hljs-number">0.01</span>;
+            <div class="content"><div class='highlight'><pre>        complexity = options.complexity || <span class="hljs-number">0.01</span>;
+
+    <span class="hljs-keyword">if</span> (! apikey) {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"apikey option is required."</span>);
+    }
+
+    <span class="hljs-keyword">if</span> (! publickey) {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"publickey option is required."</span>);
     }
 
     <span class="hljs-keyword">var</span> api = <span class="hljs-keyword">new</span> Hashcash(apikey, publickey, serverUrl);
@@ -165,11 +164,11 @@ and make it larger for Registration form for example.</p>
             formSrc    : <span class="hljs-string">'/hashcash.io/form.js'</span>,
             hashcashid : new_token,
             serverUrl  : api.getServerUrl(),
-            complexity : options.complexity,
+            complexity : complexity,
             work       : <span class="hljs-literal">false</span>
         };
 
-        <span class="hljs-keyword">var</span> promises = [];</pre></div></div>
+        <span class="hljs-keyword">var</span> apiCallPromise;</pre></div></div>
             
         </li>
         
@@ -193,12 +192,10 @@ delete it from list of tokens.</p>
 
             <span class="hljs-keyword">if</span> (pos != -<span class="hljs-number">1</span>) {
                 <span class="hljs-keyword">delete</span> req.session.hashcash.tokens[pos];
-                <span class="hljs-keyword">var</span> promise = api.getWorkById(id);
-                promise.then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(work)</span> {</span>
-                    console.log(work);
+                apiCallPromise = api.getWorkById(id);
+                apiCallPromise.then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(work)</span> {</span>
                     res.locals.hashcash.work = work;
                 });
-                promises.push(promise);
             }
             <span class="hljs-keyword">else</span> {
                 res.locals.hashcash.error = <span class="hljs-string">"invalid token submitted"</span>;
@@ -236,9 +233,14 @@ applications. Sample return:</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">if</span> (pathname == res.locals.hashcash.restSrc) {
-            Q.when(promises, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+            <span class="hljs-keyword">if</span> (apiCallPromise) {
+                apiCallPromise.then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+                    res.json(res.locals.hashcash);
+                });
+            }
+            <span class="hljs-keyword">else</span> {
                 res.json(res.locals.hashcash);
-            });
+            }
             <span class="hljs-keyword">return</span>;
         }</pre></div></div>
             
@@ -257,6 +259,10 @@ applications. Sample return:</p>
             
             <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">if</span> (pathname == res.locals.hashcash.workerSrc) {
             api.getWorkerCode().then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(code)</span> {</span>
+                <span class="hljs-keyword">if</span> (! res.getHeader(<span class="hljs-string">'Cache-Control'</span>) || !res.getHeader(<span class="hljs-string">'Expires'</span>)) {
+                    res.setHeader(<span class="hljs-string">"Cache-Control"</span>, <span class="hljs-string">"public, max-age=86400"</span>);
+                    res.setHeader(<span class="hljs-string">"Expires"</span>, <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>(<span class="hljs-built_in">Date</span>.now() + <span class="hljs-number">86400000</span>).toUTCString());
+                }
                 res.set(<span class="hljs-string">'Content-Type'</span>, <span class="hljs-string">'text/javascript'</span>);
                 res.end(code);
             });
@@ -278,7 +284,7 @@ applications. Sample return:</p>
             
             <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">if</span> (pathname == res.locals.hashcash.formSrc) {
             fs.readFile(__dirname + <span class="hljs-string">'/client/form.js'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(err, data)</span> {</span>
-                <span class="hljs-keyword">if</span> (err) <span class="hljs-keyword">throw</span> err;
+                <span class="hljs-keyword">if</span> (err) { <span class="hljs-keyword">throw</span> err; }
                 res.end(data);
             });
             <span class="hljs-keyword">return</span>;
@@ -297,9 +303,14 @@ applications. Sample return:</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        Q.when(promises, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">if</span> (apiCallPromise) {
+            apiCallPromise.then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+                next();
+            });
+        }
+        <span class="hljs-keyword">else</span> {
             next();
-        });
+        }
     };
 };</pre></div></div>
             

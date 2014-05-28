@@ -1,6 +1,6 @@
 {
   "name": "express-hashcash.io",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "author": "Pavel Karoukin <pavel@karoukin.us>",
   "description": "Express.js Hashcash.io integration",
   "main": "./lib/express-hashcash",
