@@ -1,6 +1,6 @@
 {
   "name": "express-hashcash.io",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "author": "Pavel Karoukin <pavel@karoukin.us>",
   "description": "Express.js Hashcash.io integration",
   "main": "./lib/express-hashcash",
@@ -14,7 +14,7 @@
     "server"
   ],
   "dependencies": {
-    "hashcash.io": ">=0.0.3",
+    "hashcash.io": ">=0.0.4",
     "node-uuid": "^1.4.1",
     "url": "^0.7.9",
     "q": "^1.0.0"
